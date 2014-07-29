@@ -1,0 +1,8 @@
+\documentclass{article}
+
+\begin{document}
+
+Here is some text. Will this compile?
+
+
+\end{document}
