@@ -1,0 +1,11 @@
+% !Rnw root = lumi_microarray.Rnw
+\section{Quality Control} % section title
+\label{SC1-sect:qc} % \label{} allows reference to this section
+% !!! please use unique labels for all
+% your sections, equations, figures, tables, etc.
+
+\subsection{Principal Components Analysis}
+\subsection{Heirarchical Clustering}
+\subsection{Sample Distance}
+\subsection{Conclusions (Sample Level)}
+\subsection{Detected Probes}

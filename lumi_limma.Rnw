@@ -1,0 +1,11 @@
+% !Rnw root = lumi_microarray.Rnw
+\section{Detecting DEGs} % section title
+\label{SC1-sect:limma} % \label{} allows reference to this section
+%!!! please use unique labels (e.g., include your initials) for all
+%your sections, equations, figures, tables, etc.
+
+\subsection{Contrasts}
+\subsection{Volcano Plots}
+\subsection{Differentially Expressed Genes}
+\subsection{Heatmaps}
+

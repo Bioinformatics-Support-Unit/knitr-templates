@@ -1,0 +1,69 @@
+\documentclass[12pt,BCOR1mm,DIV18]{scrartcl}
+
+\usepackage{cite} % Make references as [1-4], not [1,2,3,4]
+\usepackage{url}  % Formatting web addresses  
+
+\usepackage[british]{babel}
+\usepackage{inputenc}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{makeidx}
+\usepackage{booktabs}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{microtype}
+
+\RequirePackage[unicode,hyperfootnotes=false]{hyperref}
+ \hypersetup{%
+   pdfborder = {0 0 0},
+   bookmarksdepth = section,
+   citecolor = DarkGreen,
+   linkcolor = DarkBlue,
+   urlcolor = DarkGreen,
+ }%
+\urlstyle{rm}
+\newcommand{\cc}{\texttt}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%knitr settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+<<setup, include=FALSE, cache=FALSE>>=
+opts_chunk$set(fig.path='knitr_graphics/', cache.path='knitr_cache/graphics-', fig.align='center', fig.height=3, tidy.opts=list(width.cutoff=60))
+
+knit_theme$set("bw.css")
+@
+
+\raggedbottom
+\makeatletter
+\makeatother
+\makeindex
+
+\begin{document}
+\title{{\Large \bf Microarray analysis - a sample summary}}
+\author{Simon J. Cockell}
+\maketitle
+
+\begin{center}
+\noindent {\small Bioinformatics Support Unit,Newcastle University, Newcastle upon Tyne, UK.}\\
+\end{center}
+
+
+\newpage
+
+\Sexpr{knit_child('lumi_qc.Rnw')} %quality control
+\Sexpr{knit_child('lumi_limma.Rnw')} %differentially expressed genes
+\Sexpr{knit_child('lumi_function.Rnw')} %functional analysis
+\Sexpr{knit_child('lumi_summary.Rnw')} %final roundup
+\newpage
+
+% \chapter*{References}
+% \bibliographystyle{ieeetr}
+% \bibliography{bibtexfile}
+
+\clearpage
+\printindex
+
+\end{document}
+

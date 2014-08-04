@@ -1,0 +1,6 @@
+% !Rnw root = lumi_microarray.Rnw
+\section{Summary} % section title
+\label{SC1-sect:summary} % \label{} allows reference to this section
+%!!! please use unique labels (e.g., include your initials) for all
+%your sections, equations, figures, tables, etc.
+
