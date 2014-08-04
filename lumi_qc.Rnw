@@ -1,4 +1,6 @@
 % !Rnw root = lumi_microarray.Rnw
+\section{Data Summary}
+
 \section{Quality Control} % section title
 \label{SC1-sect:qc} % \label{} allows reference to this section
 % !!! please use unique labels for all
