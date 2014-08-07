@@ -1,13 +1,96 @@
 % !Rnw root = lumi_microarray.Rnw
 \section{Data Summary}
 
+<<read_data, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+library("lumi")
+library("knitr")
+library("ggplot2")
+library("gplots")
+raw_data = lumiR('/path/to/data')
+pheno_data = read.table("/path/to/pheno", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
+pData(raw_data) = pheno_data
+vst_data = lumiT(raw_data, method='vst')
+rsn_data = lumiN(vst_data, method='rsn')
+qc_data = lumiQ(rsn_data)
+
+@
+
+%first Sexpr call below won't work if we don't do this
+\Sexpr{ncol(qc_data)}
+The data consists of \Sexpr{ncol(qc_data)} human HT12v4 arrays, which have \Sexpr{nrow(qc_data)} probes. A summary of the probes passing the scanner's detection p-Value threshold is shown in table 1.\\
+
+\begin{table}[h]
+\centering
+<<table1, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE, results="asis">>=
+pvals = detection(qc_data)
+passes5 = apply(pvals, 2, function(x) sum(x<0.05))
+passes1 = apply(pvals, 2, function(x) sum(x<0.01))
+percent5 = passes5/nrow(qc_data)*100
+percent1 = passes1/nrow(qc_data)*100
+df = data.frame("Sample Name"=sampleNames(qc_data), 
+                "Th 0.05"=passes5, 
+                "Percent 0.05"=percent5,
+                "Th 0.01"=passes1, 
+                "Percent 0.01"=percent1)
+
+kable(df, format="latex", row.names = FALSE, digits=3)
+@
+
+\caption{Probes passing detection p-Value thresholds on the arrays in the experiment.}\label{table1}
+\end{table}
+
+
 \section{Quality Control} % section title
 \label{SC1-sect:qc} % \label{} allows reference to this section
 % !!! please use unique labels for all
 % your sections, equations, figures, tables, etc.
 
+
+
 \subsection{Principal Components Analysis}
-\subsection{Heirarchical Clustering}
+
+\noindent Principal component analysis is a dimension reduction and visualisation technique that is here used to project the multivariate data vector of each array into a two-dimensional plot, such that the spatial arrangement of the points in the plot reflects the overall data (dis)similarity between the arrays. 
+
+\noindent Arrays are colour-coded by the experimental groups they fall into, allowing for easy identification of samples that are responding differently to the others in their cohort, whether they are grouping incorrectly, or are outliers.
+
+\begin{figure}[h]
+\centering
+<<figure1, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+#library("affycoretools")
+group_factor = as.factor(pData(qc_data)$knockdown)
+pca = prcomp(t(exprs(qc_data)))
+d = as.data.frame(pca$x)
+d$knockdown = group_factor
+ggplot(d, aes(x=PC1, y=PC2)) + 
+    geom_point(aes(colour=knockdown)) + # add size=PC3 to aes to get "3D" plot
+    theme_bw() +
+    theme(legend.text = element_text(size = 8), text = element_text(size=8)) + 
+    geom_text(label=rownames(d), size=2, vjust=1.2, hjust=-0.2)
+    
+@
+\label{figure1}
+\caption{a scatterplot of the arrays along the first two principal components. You can use this plot to explore if the arrays cluster, and whether this is according to an intended experimental factor (indicated by colour), or according to unintended causes such as batch effects.}
+\end{figure}
+
 \subsection{Sample Distance}
+
+\noindent The distance (d) between two arrays (a and b) is computed as the euclidian difference between the data of the arrays (using the data from all probes without filtering). \\
+In formula, $dab = \sqrt{\sum{}(Mai - Mbi)^2}$, where Mai is the value of the i-th probe on the a-th array.
+
+\begin{figure}[h]
+\centering
+
+<<figure2, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+d = dist(t(exprs(qc_data)), method='euclidian')
+#apply(as.matrix(d), 2, sum) #can use for outlier detection - how to decide what's large?
+heatmap.2(as.matrix(d), col=redblue(48), 
+          trace="none", density.info="none")
+@
+
+\label{figure2}
+\caption{shows a false color heatmap of the distances between arrays. The color scale is chosen to cover the range of distances encountered in the dataset. Patterns in this plot can indicate clustering of the arrays either because of intended biological or unintended experimental factors (batch effects).}
+\end{figure}
+
+\subsection{Heirarchical Clustering}
 \subsection{Conclusions (Sample Level)}
 \subsection{Detected Probes}

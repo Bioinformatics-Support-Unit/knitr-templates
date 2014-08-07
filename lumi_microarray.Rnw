@@ -29,10 +29,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %knitr settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-<<setup, include=FALSE, cache=FALSE>>=
+<<setup, include=FALSE, cache=FALSE, concordance=TRUE>>=
 opts_chunk$set(fig.path='knitr_graphics/', cache.path='knitr_cache/graphics-', fig.align='center', fig.height=3, tidy.opts=list(width.cutoff=60))
 
 knit_theme$set("bw.css")
+setwd('~/Data/knitr')
 @
 
 \raggedbottom
@@ -56,6 +57,7 @@ knit_theme$set("bw.css")
 \Sexpr{knit_child('lumi_limma.Rnw')} %differentially expressed genes
 \Sexpr{knit_child('lumi_function.Rnw')} %functional analysis
 \Sexpr{knit_child('lumi_summary.Rnw')} %final roundup
+
 \newpage
 
 % \chapter*{References}
