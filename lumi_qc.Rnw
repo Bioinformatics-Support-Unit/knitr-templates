@@ -6,6 +6,7 @@ library("lumi")
 library("knitr")
 library("ggplot2")
 library("gplots")
+library("ggdendro")
 raw_data = lumiR('/path/to/data')
 pheno_data = read.table("/path/to/pheno", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
 pData(raw_data) = pheno_data
@@ -92,5 +93,23 @@ heatmap.2(as.matrix(d), col=redblue(48),
 \end{figure}
 
 \subsection{Heirarchical Clustering}
+
+<<figure3, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+# cluster the samples (method choice may vary)
+d <- dist(t(exprs(qc_data)), method='euclidian')
+h <- hclust(d, method='complete')
+
+# now use ggdendro
+dd <- dendro_data(h)
+labs <- label(dd)
+# need to colour labels by sample group - from phene
+labs$group = pData(qc_data)[as.character(labs$label),]
+
+# build the plot
+ggdendrogram(h, leaf_labels=F, labels=F, rotate=T) +
+  geom_text(data=labs, aes(label=label, x=x, y=y, colour=as.factor(group)), hjust=1.1, size=3) +
+  scale_x_discrete(labels = c())
+@
+
 \subsection{Conclusions (Sample Level)}
 \subsection{Detected Probes}
