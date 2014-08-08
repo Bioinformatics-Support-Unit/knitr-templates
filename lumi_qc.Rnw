@@ -4,11 +4,14 @@
 <<read_data, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
 library("lumi")
 library("knitr")
+library("RColorBrewer")
+library("reshape2")
 library("ggplot2")
 library("gplots")
 library("ggdendro")
+
 raw_data = lumiR('/path/to/data')
-pheno_data = read.table("/path/to/pheno", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
+pheno_data = read.table("/path.to/pheno", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
 pData(raw_data) = pheno_data
 vst_data = lumiT(raw_data, method='vst')
 rsn_data = lumiN(vst_data, method='rsn')
@@ -40,6 +43,41 @@ kable(df, format="latex", row.names = FALSE, digits=3)
 \caption{Probes passing detection p-Value thresholds on the arrays in the experiment.}\label{table1}
 \end{table}
 
+\subsection{Normalisation}
+
+Normalisation is achieved by transforming the data to log2 space via a \emph{Variance Stabilizing Transformation}, which is designed to take advantage of the significant technical replication present on Illumina Beadarrays resulting from the presence of multiple beads for each individual probe. This transformation reduces the heteroskedastic nature of microarray data, so that it better conforms to the assumptions of the statistical tests we'll apply later. Actual normalisation is by the \emph{Robust Spline Normalisation} algorithm that was designed for Beadarray data, and combines the advantageous features of both quantile normalisation (fast, gene rank order preserving) and loess normalization which is continuous.
+
+\begin{figure}[h]
+\centering
+<<figure1, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+group_factor = factor(pData(qc_data)$knockdown, levels=unique(pData(qc_data)$knockdown)) #preserve the order?
+
+rd = melt(exprs(raw_data))
+rd$value = log2(rd$value)
+rd$treat = 'raw'
+rd$group = rep(group_factor, each=nrow(qc_data))
+nd = melt(exprs(qc_data))
+nd$treat = 'norm'
+nd$group = rep(group_factor, each=nrow(qc_data))
+ad = rbind(rd, nd)
+ad$treat = factor(ad$treat, levels = c("raw", "norm"))
+
+ggplot(data=ad, aes(x=Var2, y=value)) + 
+  geom_boxplot(aes(fill=group), outlier.size=0.5, size=0.2) + 
+  facet_grid(. ~ treat) + 
+  scale_x_discrete(name="") +
+  scale_y_continuous(name="Amplitude") +
+  theme_bw() + 
+  theme(axis.text.x=element_text(angle=90, vjust=0.5, size=6), 
+        axis.text.y=element_text(size=6), axis.title.y=element_text(size=6),
+        legend.text=element_text(size=6), legend.position="top", legend.title=element_text(size=6))
+
+@
+\label{figure1}
+\caption{Boxplots of data pre-normalisation (left) and after VST and RSN (right).}
+\end{figure}
+
+\clearpage
 
 \section{Quality Control} % section title
 \label{SC1-sect:qc} % \label{} allows reference to this section
@@ -56,9 +94,8 @@ kable(df, format="latex", row.names = FALSE, digits=3)
 
 \begin{figure}[h]
 \centering
-<<figure1, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+<<figure2, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
 #library("affycoretools")
-group_factor = as.factor(pData(qc_data)$knockdown)
 pca = prcomp(t(exprs(qc_data)))
 d = as.data.frame(pca$x)
 d$knockdown = group_factor
@@ -69,7 +106,7 @@ ggplot(d, aes(x=PC1, y=PC2)) +
     geom_text(label=rownames(d), size=2, vjust=1.2, hjust=-0.2)
     
 @
-\label{figure1}
+\label{figure2}
 \caption{a scatterplot of the arrays along the first two principal components. You can use this plot to explore if the arrays cluster, and whether this is according to an intended experimental factor (indicated by colour), or according to unintended causes such as batch effects.}
 \end{figure}
 
@@ -81,20 +118,23 @@ In formula, $dab = \sqrt{\sum{}(Mai - Mbi)^2}$, where Mai is the value of the i-
 \begin{figure}[h]
 \centering
 
-<<figure2, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+<<figure3, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
 d = dist(t(exprs(qc_data)), method='euclidian')
-#apply(as.matrix(d), 2, sum) #can use for outlier detection - how to decide what's large?
+#apply(as.matrix(d), 2, mean) #can use for outlier detection - how to decide what's large?
 heatmap.2(as.matrix(d), col=redblue(48), 
           trace="none", density.info="none")
 @
 
-\label{figure2}
+\label{figure3}
 \caption{shows a false color heatmap of the distances between arrays. The color scale is chosen to cover the range of distances encountered in the dataset. Patterns in this plot can indicate clustering of the arrays either because of intended biological or unintended experimental factors (batch effects).}
 \end{figure}
 
 \subsection{Heirarchical Clustering}
 
-<<figure3, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+\begin{figure}[h]
+\centering
+
+<<figure4, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
 # cluster the samples (method choice may vary)
 d <- dist(t(exprs(qc_data)), method='euclidian')
 h <- hclust(d, method='complete')
@@ -107,10 +147,27 @@ labs$group = pData(qc_data)[as.character(labs$label),]
 
 # build the plot
 ggdendrogram(h, leaf_labels=F, labels=F, rotate=T) +
-  scale_x_discrete(labels = c()) +
-  geom_text(data=labs, aes(label=label, x=x, y=y, colour=as.factor(group)), hjust=1.0, size=1.5)
+  scale_x_discrete(labels = c()) + 
+  scale_y_continuous(expand = c(0.1, 0)) +
+  geom_text(data=labs, aes(label=label, x=x, y=y, colour=as.factor(group)), hjust=1.0, size=2.0) +
+  theme(legend.text=element_text(size=6), legend.title=element_text(size=6))
   
 @
 
+\label{figure4}
+\caption{dendrogram of samples clustered using complete hierarchical clustering.}
+\end{figure}
+
 \subsection{Conclusions (Sample Level)}
+
+<<auto_outlier, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+mean_dist = apply(as.matrix(d), 2, mean)
+outliers = which(mean_dist > mean(mean_dist) + 2*sd(mean_dist))
+#if (length(outliers) > 0) knit_child("lumi_outliers.Rnw")
+@
+
+All of the quality control analysis presented about points to TF3TF4B being an outlier array that should be removed from the analysis, as it is likely to be harmful if left in. This array is removed for all subsequent analyses.
+
+
+
 \subsection{Detected Probes}
