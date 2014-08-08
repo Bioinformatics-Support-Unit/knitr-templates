@@ -107,8 +107,9 @@ labs$group = pData(qc_data)[as.character(labs$label),]
 
 # build the plot
 ggdendrogram(h, leaf_labels=F, labels=F, rotate=T) +
-  geom_text(data=labs, aes(label=label, x=x, y=y, colour=as.factor(group)), hjust=1.1, size=3) +
-  scale_x_discrete(labels = c())
+  scale_x_discrete(labels = c()) +
+  geom_text(data=labs, aes(label=label, x=x, y=y, colour=as.factor(group)), hjust=1.0, size=1.5)
+  
 @
 
 \subsection{Conclusions (Sample Level)}
