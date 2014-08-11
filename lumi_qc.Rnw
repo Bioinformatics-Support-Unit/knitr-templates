@@ -166,8 +166,13 @@ outliers = which(mean_dist > mean(mean_dist) + 2*sd(mean_dist))
 #if (length(outliers) > 0) knit_child("lumi_outliers.Rnw")
 @
 
-All of the quality control analysis presented about points to TF3TF4B being an outlier array that should be removed from the analysis, as it is likely to be harmful if left in. This array is removed for all subsequent analyses.
+All of the quality control analysis presented points to TF3TF4B being an outlier array that should be removed, as it is likely to be harmful to the analysis if left in. This array is removed for all subsequent analyses. The rest of the data looks clean and consistent.
 
-
+<<outlier_remove, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+raw_data = raw_data[,sampleNames(raw_data) != 'TF3TF4B']
+vst_data = lumiT(raw_data, method='vst')
+rsn_data = lumiN(vst_data, method='rsn')
+qc_data = lumiQ(rsn_data)
+@
 
 \subsection{Detected Probes}
