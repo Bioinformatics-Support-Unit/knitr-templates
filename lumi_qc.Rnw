@@ -13,7 +13,7 @@ library("lumiHumanAll.db")
 library("annotate")
 library("limma")
 
-raw_data = lumiR('~/Data/Bioconductor_Course/lumi_raw_data.txt')
+raw_data =lumiR('~/Data/Bioconductor_Course/lumi_raw_data.txt')
 pheno_data = read.table("~/Data/Bioconductor_Course/lumi_pheno.txt", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
 pData(raw_data) = pheno_data
 vst_data = lumiT(raw_data, method='vst')
@@ -98,7 +98,7 @@ ggplot(data=ad, aes(x=Var2, y=value)) +
 \begin{figure}[h]
 \centering
 <<figure2, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
-#library("affycoretools")
+
 pca = prcomp(t(exprs(qc_data)))
 d = as.data.frame(pca$x)
 d$knockdown = group_factor

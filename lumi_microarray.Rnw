@@ -33,7 +33,7 @@
 opts_chunk$set(fig.path='knitr_graphics/', cache.path='knitr_cache/graphics-', fig.align='center', fig.height=3, tidy.opts=list(width.cutoff=60))
 
 knit_theme$set("bw.css")
-setwd('~/Data/knitr')
+#setwd('~/Data/knitr')
 @
 
 \raggedbottom

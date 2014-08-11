@@ -5,10 +5,10 @@
 %your sections, equations, figures, tables, etc.
 
 <<annotate, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
-probe_list <- rownames(filtered_data)
-nuIDs <- probeID2nuID(probe_list)[, "nuID"]
-symbol <- getSYMBOL(nuIDs, "lumiHumanAll.db")
-name <- unlist(lookUp(nuIDs, "lumiHumanAll.db", "GENENAME"))
+probe_list = rownames(filtered_data)
+nuIDs = probeID2nuID(probe_list)[, "nuID"]
+symbol = getSYMBOL(nuIDs, "lumiHumanAll.db")
+name = unlist(lookUp(nuIDs, "lumiHumanAll.db", "GENENAME"))
 anno_df = data.frame(ID = nuIDs, probe_list, symbol, name)
 @
 
@@ -38,22 +38,21 @@ fit <- lmFit(filtered_data, design)
 contrasts <- makeContrasts(NFKB2-Control, RelB-Control, EZH2-Control, p53-Control,
 NFKB2_p53-Control, RelB_p53-Control,
 EZH2_p53-Control, levels=levels(group_factor))
-fit2 <- contrasts.fit(fit, contrasts=contrasts)
-fit2 <- eBayes(fit2)
+fit2 = contrasts.fit(fit, contrasts=contrasts)
+fit2 = eBayes(fit2)
 fit2$genes = anno_df
 @
 
 \subsection{Volcano Plots}
 
-Volcano plots can be used to summarise the fold change and p-Value information produced by limma, the $log_2$ fold change is plotted on the x-axis and the negative $log_10$ p-Value is plotted on the y-axis.
+Volcano plots can be used to summarise the fold change and p-Value information produced by limma, the $log_2$ fold change is plotted on the x-axis and the negative $log_{10}$ p-Value is plotted on the y-axis.
 
 \begin{figure}[h]
 \centering
 
-<<figure5, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=4>>=
+<<figure5, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=10>>=
 source('~/Code/r-viz-snippets/ggvolcano.R')
-plots = lapply(colnames(fit2@.Data[7][[1]]), function(x) gg_volcano(topTable(fit2, coef=x, number=Inf), title=x))
-library(gridExtra)
+plots = lapply(colnames(fit2@.Data[7][[1]]), function(x) gg_volcano(topTable(fit2, coef=x, number=Inf), title=x, report=TRUE))
 #grid.arrange(plots[[1]], plots[[2]], plots[[3]], plots[[4]], plots[[5]], plots[[6]], plots[[7]], nrow=4)
 multiplot(plotlist=plots, cols=2)
 
@@ -61,7 +60,7 @@ multiplot(plotlist=plots, cols=2)
 @
 
 \label{figure5}
-\caption{Volcano Plot of contrast NFKB2 - Control.}
+\caption{Volcano Plot of contrast seven contrasts detailed above.}
 \end{figure}
 
 \subsection{Differentially Expressed Genes}
