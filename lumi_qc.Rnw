@@ -9,9 +9,12 @@ library("reshape2")
 library("ggplot2")
 library("gplots")
 library("ggdendro")
+library("lumiHumanAll.db")
+library("annotate")
+library("limma")
 
-raw_data = lumiR('/path/to/data')
-pheno_data = read.table("/path.to/pheno", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
+raw_data = lumiR('~/Data/Bioconductor_Course/lumi_raw_data.txt')
+pheno_data = read.table("~/Data/Bioconductor_Course/lumi_pheno.txt", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
 pData(raw_data) = pheno_data
 vst_data = lumiT(raw_data, method='vst')
 rsn_data = lumiN(vst_data, method='rsn')
@@ -110,6 +113,8 @@ ggplot(d, aes(x=PC1, y=PC2)) +
 \caption{a scatterplot of the arrays along the first two principal components. You can use this plot to explore if the arrays cluster, and whether this is according to an intended experimental factor (indicated by colour), or according to unintended causes such as batch effects.}
 \end{figure}
 
+\clearpage
+
 \subsection{Sample Distance}
 
 \noindent The distance (d) between two arrays (a and b) is computed as the euclidian difference between the data of the arrays (using the data from all probes without filtering). \\
@@ -129,7 +134,11 @@ heatmap.2(as.matrix(d), col=redblue(48),
 \caption{shows a false color heatmap of the distances between arrays. The color scale is chosen to cover the range of distances encountered in the dataset. Patterns in this plot can indicate clustering of the arrays either because of intended biological or unintended experimental factors (batch effects).}
 \end{figure}
 
-\subsection{Heirarchical Clustering}
+\clearpage
+
+\subsection{Hierarchical Clustering}
+
+Hierarchical clustering is an agglomerative, greedy, unsupervised clustering technique. It takes a "bottom up" approach to clustering: each observation starts in its own cluster, then pairs of clusters are merged as one moves up the hierarchy. The mothod used here is complete linkage, such that when a cluster is formed, its distance to other arrays is computed as the maximum distance between any array in the cluster and the other array.
 
 \begin{figure}[h]
 \centering
@@ -158,12 +167,26 @@ ggdendrogram(h, leaf_labels=F, labels=F, rotate=T) +
 \caption{dendrogram of samples clustered using complete hierarchical clustering.}
 \end{figure}
 
+\clearpage
+
 \subsection{Conclusions (Sample Level)}
 
-<<auto_outlier, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+<<auto_outlier, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='asis'>>=
+d <- dist(t(exprs(qc_data)), method='euclidian')
 mean_dist = apply(as.matrix(d), 2, mean)
 outliers = which(mean_dist > mean(mean_dist) + 2*sd(mean_dist))
-#if (length(outliers) > 0) knit_child("lumi_outliers.Rnw")
+cat("Outlier detection was performed by looking for arrays for which the mean of the distances to all other arrays was exceptionally large. ")
+if (length(outliers) > 0) {
+  if (length(outliers) == 1) {
+    cat(length(outliers)," outlier (", names(outliers), ") was discovered by this mechanism.", sep="")
+  } else {
+    cat(length(outliers)," outliers (", sep="")
+    cat(names(outliers), sep=", ")
+    cat(") were discovered by this mechanism.", sep="")
+  }
+} else {
+  cat("No outliers were discovered by this mechanism.")
+}
 @
 
 All of the quality control analysis presented points to TF3TF4B being an outlier array that should be removed, as it is likely to be harmful to the analysis if left in. This array is removed for all subsequent analyses. The rest of the data looks clean and consistent.
@@ -173,6 +196,17 @@ raw_data = raw_data[,sampleNames(raw_data) != 'TF3TF4B']
 vst_data = lumiT(raw_data, method='vst')
 rsn_data = lumiN(vst_data, method='rsn')
 qc_data = lumiQ(rsn_data)
+#filter group_factor
+group_factor = factor(pData(qc_data)$knockdown, levels=unique(pData(qc_data)$knockdown)) #preserve the order?
 @
 
 \subsection{Detected Probes}
+
+<<probe_remove, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+present_count = detectionCall(qc_data)
+filtered_data = qc_data[present_count > 0,]
+nexclude = nrow(qc_data) - nrow(filtered_data)
+@
+Probes detected on each array are summarised in table 1. For a probe to be used in the subsequent analysis, it must pass the detection p-Value threshold (0.01) on at least one array. Applying this simple metric excludes \Sexpr{nexclude} probes from the analysis, and therefore we are carrying forward \Sexpr{nrow(filtered_data)} probes (\Sexpr{round(nrow(filtered_data)/nrow(qc_data)*100, 1)}\% of the total) on \Sexpr{ncol(filtered_data)} arrays for analysis.
+
+\clearpage
