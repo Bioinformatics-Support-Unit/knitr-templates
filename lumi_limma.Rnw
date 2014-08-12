@@ -51,12 +51,15 @@ Volcano plots can be used to summarise the fold change and p-Value information p
 \centering
 
 <<figure5, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=10>>=
+pval_cut=0.05
+afc_cut=2
+contrast_names = colnames(contrasts)
 source('~/Code/r-viz-snippets/ggvolcano.R')
-plots = lapply(colnames(fit2@.Data[7][[1]]), function(x) gg_volcano(topTable(fit2, coef=x, number=Inf), title=x, report=TRUE))
+#colnames(fit2@.Data[7][[1]])
+plots = lapply(contrast_names, function(x) gg_volcano(topTable(fit2, coef=x, number=Inf), afc=afc_cut, pval=pval_cut, title=x, report=TRUE))
 #grid.arrange(plots[[1]], plots[[2]], plots[[3]], plots[[4]], plots[[5]], plots[[6]], plots[[7]], nrow=4)
 multiplot(plotlist=plots, cols=2)
-
-#gg_volcano(topTable(fit2, coef="NFKB2 - Control", number=Inf))
+#changed
 @
 
 \label{figure5}
@@ -64,5 +67,47 @@ multiplot(plotlist=plots, cols=2)
 \end{figure}
 
 \subsection{Differentially Expressed Genes}
+
+Limma determines differentially expressed genes (DEGs) by applying cutoffs to the statistics generated in the above steps. For these contrasts, the cutoffs applied are:\\
+
+\begin{itemize}
+  \item A p-Value, corrected for multiple tests by Benjimini-Hochberg FDR correction, of less than \Sexpr{pval_cut}
+  \item An absolute fold-change of greater than \Sexpr{afc_cut}, in either direction.
+\end{itemize}
+
+This gives the following numbers of DEGs for each contrast:
+
+\begin{table}[h]
+\centering
+<<table2, echo=FALSE, cache=TRUE, warning=FALSE, results="asis">>=
+results = lapply(contrast_names, function(x) topTable(fit2, coef=x, p.value=pval_cut, lfc=log2(afc_cut), number=Inf))
+result_counts = lapply(results, nrow)
+df = data.frame(Contrast=gsub("_", " and ", contrast_names), Count=unlist(result_counts))
+kable(df, format="latex", row.names = FALSE, digits=3, booktabs=TRUE)
+@
+\caption{Number of differentially expressed genes for each contrast.}\label{table2}
+\end{table}
+
+The top ten genes for each contrast are summarised in the tables below.
+
+<<gene_tables, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results="asis">>=
+library("xtable")
+i = 3
+for (contrast in contrast_names) {
+  #cat("\\begin{table}[h]\n")
+  #cat("\\centering\n")
+  top10 = topTable(fit2, coef=contrast)
+  filtered10 = top10[,colnames(top10) %in% c('probe_list','symbol','logFC','adj.P.Val','name')]
+  colnames(filtered10) = c("ProbeID", "GeneSymbol", "Description", "logFC", "FDR")
+  #kable(filtered10, format="latex", row.names = FALSE, booktabs=TRUE)
+  x.width <- xtable(filtered10, caption=paste0("Top 10 genes for contrast ",gsub("_", " and ", contrast)), include.rownames=FALSE)
+  align(x.width) <- "|l|l|l|X|r|r|"
+  print(x.width, tabular.environment="tabularx", width="\\textwidth")
+  #cat("\\caption{Top 10 genes for contrast ",gsub("_", " and ", contrast),".}\\label{table",as.character(i),"}\n", sep="")
+  #cat("\\end{table}\n")
+  i = i + 1
+}
+@
+
 \subsection{Heatmaps}
 

@@ -13,6 +13,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{textcomp}
 \usepackage{microtype}
+\usepackage{tabularx}
 
 \RequirePackage[unicode,hyperfootnotes=false]{hyperref}
  \hypersetup{%
