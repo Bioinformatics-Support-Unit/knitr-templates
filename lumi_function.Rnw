@@ -5,7 +5,136 @@
 %your sections, equations, figures, tables, etc.
 
 \subsection{Enriched GO Terms}
+
+\noindent The Gene Ontology (GO) is a controlled vocabulary (CV) of terms for describing gene product characteristics and gene product annotation data \cite{Ashburner:2000ja}. Actually, GO provides three controlled vocabularies, one each for \emph{biological process}, \emph{molecular function} and \emph{cellular component} annotation. The terms from these CVs are attached to gene products by several mechanisms, including expert annotation and inference from sequence similarity. The results presented here use the GOstats package to test gene lists for over-represented terms in these CVs \cite{Falcon:2006ht}.\\
+
+\noindent The tables below are intended as a summary, showing the top 10 enriched GO terms for each CV (if 10 are found to be enriched). A full report of the GOstats results can be found in the additional files, downloadable from:
+
+\begin{itemize}
+  \item \url{\Sexpr{files_url}}
+\end{itemize}
+
+<<gostats_bp, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+library("GOstats")
+sig_genes = topTable(fit2, coef=contrast_names[1], number=Inf, p.value=0.05, lfc=log2(1.5))
+sig_probes = as.character(sig_genes$probe_list)
+entrez = unique(unlist(lookUp(nuIDs[sig_probes], "lumiHumanAll.db", "ENTREZID")))
+entrez = entrez[!is.na(entrez)]
+entrez = as.character(entrez)
+entrez_universe = unique(unlist(lookUp(nuIDs, "lumiHumanAll.db", "ENTREZID")))
+entrez_universe = entrez_universe[!is.na(entrez_universe)]
+entrez_universe = as.character(entrez_universe)
+bp_params = new("GOHyperGParams", geneIds=entrez, universeGeneIds=entrez_universe, annotation="lumiHumanAll.db", ontology="BP", pvalueCutoff=0.05, conditional=FALSE, testDirection="over")
+bp_hyperg = hyperGTest(bp_params)
+bp_fdr = p.adjust(pvalues(bp_hyperg), method="fdr")
+bp_table = summary(bp_hyperg)
+bp_table$fdr = bp_fdr[bp_table$GOBPID]
+sig_bp_table = bp_table[bp_table$fdr < 0.05,]
+if (nrow(sig_bp_table) < 10 & nrow(sig_bp_table) > 0) {
+  x_bp_table <- xtable(sig_bp_table[,c("GOBPID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top ",nrow(sig_bp_table)," enriched GO Biological Process terms for contrast ",gsub("_", " and ", contrast_names[1])), display=c("s", "s", "e", "e", "d", "d", "s"))
+} else if (nrow(sig_bp_table) == 0) {
+  x_bp_table = NA
+} else {
+  x_bp_table <- xtable(sig_bp_table[1:10,c("GOBPID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top 10 enriched GO Biological Process terms for contrast ",gsub("_", " and ", contrast_names[1])), display=c("s", "s", "e", "e", "d", "d", "s"))
+}
+@
+
+<<bp_table, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results="asis">>=
+if (is.na(x_bp_table)) {
+  cat("No enriched Biological Process GO terms were found")
+} else {
+    print(x_bp_table, tabular.environment="tabularx", width="\\textwidth", include.rownames=FALSE)
+}
+@
+
+<<gostats_mf, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+mf_params = new("GOHyperGParams", geneIds=entrez, universeGeneIds=entrez_universe, annotation="lumiHumanAll.db", ontology="MF", pvalueCutoff=0.05, conditional=FALSE, testDirection="over")
+mf_hyperg = hyperGTest(mf_params)
+mf_fdr = p.adjust(pvalues(mf_hyperg), method="fdr")
+mf_table = summary(mf_hyperg)
+mf_table$fdr = mf_fdr[mf_table$GOMFID]
+sig_mf_table = mf_table[mf_table$fdr < 0.05,]
+if (nrow(sig_mf_table) < 10 & nrow(sig_mf_table) > 0) {
+  x_mf_table <- xtable(sig_mf_table[,c("GOMFID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top ",nrow(sig_mf_table)," enriched GO Molecular Function terms for contrast ",gsub("_", " and ", contrast_names[1])), 
+                       display=c("s", "s", "e", "e", "d", "d", "s"))
+} else if (nrow(sig_mf_table) == 0) {
+  x_mf_table = NA
+} else {
+  x_mf_table <- xtable(sig_mf_table[1:10,c("GOMFID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top 10 enriched GO Molecular Function terms for contrast ",gsub("_", " and ", contrast_names[1])), display=c("s", "s", "e", "e", "d", "d", "s"))
+}
+
+@
+
+<<mf_table, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results="asis">>=
+if (is.na(x_mf_table)) {
+  cat("No enriched Molecular Function GO terms were found")
+} else {
+    print(x_mf_table, tabular.environment="tabularx", width="\\textwidth", include.rownames=FALSE)
+}
+@
+
+<<gostats_cc, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+cc_params = new("GOHyperGParams", geneIds=entrez, universeGeneIds=entrez_universe, annotation="lumiHumanAll.db", ontology="CC", pvalueCutoff=0.05, conditional=FALSE, testDirection="over")
+cc_hyperg = hyperGTest(cc_params)
+cc_fdr = p.adjust(pvalues(cc_hyperg), method="fdr")
+cc_table = summary(cc_hyperg)
+cc_table$fdr = cc_fdr[cc_table$GOCCID]
+sig_cc_table = cc_table[cc_table$fdr < 0.05,]
+if (nrow(sig_cc_table) < 10 & nrow(sig_cc_table) > 0) {
+  x_cc_table <- xtable(sig_cc_table[,c("GOCCID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top ",nrow(sig_cc_table)," enriched GO Cellular Component terms for contrast ",gsub("_", " and ", contrast_names[1])), 
+                       display=c("s", "s", "e", "e", "d", "d", "s"))
+} else if (nrow(sig_cc_table) == 0) {
+  x_cc_table = NA
+} else {
+  x_cc_table <- xtable(sig_cc_table[1:10,c("GOCCID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top 10 enriched GO Cellular Component terms for contrast ",gsub("_", " and ", contrast_names[1])), display=c("s", "s", "e", "e", "d", "d", "s"))
+}
+
+@
+
+<<cc_table, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results="asis">>=
+if (is.na(x_cc_table)) {
+  cat("No enriched Cellular Component GO terms were found")
+} else {
+    print(x_cc_table, tabular.environment="tabularx", width="\\textwidth", include.rownames=FALSE)
+}
+@
+
+\clearpage
+
 \subsection{Enriched KEGG Pathways}
 
+\noindent The Kyoto Encyclopaedia of Genes and Genomes (KEGG) organises genes into biochemical pathways \cite{Kanehisa:2000wg}, rather than the somewhat broader functional classifications found in GO. The data, though, is used in exactly the same way, examining the gene lists generated previously for over-representation of KEGG pathways.
 
+<<gostats_kegg, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+kegg_params = new("KEGGHyperGParams", geneIds=entrez, universeGeneIds=entrez_universe, annotation="lumiHumanAll.db", pvalueCutoff=0.05, testDirection="over")
+kegg_hyperg = hyperGTest(kegg_params)
+kegg_fdr = p.adjust(pvalues(kegg_hyperg), method="fdr")
+kegg_table = summary(kegg_hyperg)
+kegg_table$fdr = kegg_fdr[kegg_table$KEGGID]
+sig_kegg_table = kegg_table[kegg_table$fdr < 0.05,]
+if (nrow(sig_kegg_table) < 10 & nrow(sig_kegg_table) > 0) {
+  x_kegg_table <- xtable(sig_kegg_table[,c("KEGGID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top ",nrow(sig_kegg_table)," enriched KEGG pathways for contrast ",gsub("_", " and ", contrast_names[1])), 
+                       display=c("s", "s", "e", "e", "d", "d", "s"))
+} else if (nrow(sig_kegg_table) == 0) {
+  x_kegg_table = NA
+} else {
+  x_kegg_table <- xtable(sig_kegg_table[1:10,c("KEGGID","Pvalue","fdr","Count","Size","Term")], align="l|l|l|l|l|l|X|",
+                       caption=paste0("Top 10 enriched KEGG pathways for contrast ",gsub("_", " and ", contrast_names[1])), display=c("s", "s", "e", "e", "d", "d", "s"))
+}
 
+@
+
+<<kegg_table, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results="asis">>=
+if (is.na(x_kegg_table)) {
+  cat("No enriched KEGG pathways were found")
+} else {
+    print(x_kegg_table, tabular.environment="tabularx", width="\\textwidth", include.rownames=FALSE)
+}
+@

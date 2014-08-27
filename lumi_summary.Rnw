@@ -1,6 +1,23 @@
 % !Rnw root = lumi_microarray.Rnw
-\section{Summary} % section title
+\section{Introduction} % section title
 \label{SC1-sect:summary} % \label{} allows reference to this section
-%!!! please use unique labels (e.g., include your initials) for all
-%your sections, equations, figures, tables, etc.
 
+<<global_vars, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
+files_url = "http://www.example.com/files"
+@
+
+\noindent This document is intended as an overview summary of your microarray analysis. The complete results, original images and this file itself can all be downloaded from:
+
+\begin{itemize}
+  \item \url{\Sexpr{files_url}}
+\end{itemize}
+
+\noindent The Quality Control section on page \pageref{SC1-sect:qc} gives an overall view of the microarray data analysed for this experiment, and shows the plots and analyses that drove sample- and probe-level filtering.\\
+
+\noindent The section on detecting differentially expressed genes on page \pageref{SC1-sect:limma} summarises the approach taken to the analysis of this dataset, and shows volcano plots and brief summaries of the "top" dysregulated genes in this experiment.\\
+
+\noindent Finally, the functional analysis section, on page \pageref{SC1-sect:function} examines the functional classifications likely to be important in the dysregulated genes, and summarises the most enriched classifications for two databases, the Gene Ontology and KEGG.\\
+
+\noindent If you have any questions about the content of this document, or you want to discuss additional outputs related to this work, please contact the author at \href{mailto:simon.cockell@ncl.ac.uk}{simon.cockell@ncl.ac.uk}.\\
+
+\clearpage

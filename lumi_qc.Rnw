@@ -1,5 +1,6 @@
 % !Rnw root = lumi_microarray.Rnw
 \section{Data Summary}
+\label{SC1-sect:data_summary} % \label{} allows reference to this section
 
 <<read_data, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
 library("lumi")
@@ -9,12 +10,9 @@ library("reshape2")
 library("ggplot2")
 library("gplots")
 library("ggdendro")
-library("lumiHumanAll.db")
-library("annotate")
-library("limma")
 
-raw_data =lumiR('~/Data/Bioconductor_Course/lumi_raw_data.txt')
-pheno_data = read.table("~/Data/Bioconductor_Course/lumi_pheno.txt", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
+raw_data =lumiR('/path/to/datat')
+pheno_data = read.table("/path/to/pheno", header=T, sep="\t", row.names=1, stringsAsFactors=FALSE)
 pData(raw_data) = pheno_data
 vst_data = lumiT(raw_data, method='vst')
 rsn_data = lumiN(vst_data, method='rsn')
@@ -23,8 +21,7 @@ qc_data = lumiQ(rsn_data)
 @
 
 %first Sexpr call below won't work if we don't do this
-\Sexpr{ncol(qc_data)}
-The data consists of \Sexpr{ncol(qc_data)} human HT12v4 arrays, which have \Sexpr{nrow(qc_data)} probes. A summary of the probes passing the scanner's detection p-Value threshold is shown in table 1.\\
+\noindent The data consists of \Sexpr{ncol(qc_data)} human HT12v4 arrays, which have \Sexpr{nrow(qc_data)} probes. A summary of the probes passing the scanner's detection p-Value threshold is shown in table 1.\\
 
 \begin{table}[h]
 \centering
@@ -48,11 +45,11 @@ kable(df, format="latex", row.names = FALSE, digits=3)
 
 \subsection{Normalisation}
 
-Normalisation is achieved by transforming the data to log2 space via a \emph{Variance Stabilizing Transformation}, which is designed to take advantage of the significant technical replication present on Illumina Beadarrays resulting from the presence of multiple beads for each individual probe. This transformation reduces the heteroskedastic nature of microarray data, so that it better conforms to the assumptions of the statistical tests we'll apply later. Actual normalisation is by the \emph{Robust Spline Normalisation} algorithm that was designed for Beadarray data, and combines the advantageous features of both quantile normalisation (fast, gene rank order preserving) and loess normalization which is continuous.
+\noindent Normalisation is achieved by transforming the data to log2 space via a \emph{Variance Stabilizing Transformation} \cite{Lin:2008ea}, which is designed to take advantage of the significant technical replication present on Illumina Beadarrays resulting from the presence of multiple beads for each individual probe. This transformation reduces the heteroskedastic nature of microarray data, so that it better conforms to the assumptions of the statistical tests we'll apply later. Actual normalisation is by the \emph{Robust Spline Normalisation} algorithm that was designed for Beadarray data \cite{Du:2008ev}, and combines the advantageous features of both quantile normalisation (fast, gene rank order preserving) and loess normalization which is continuous.
 
 \begin{figure}[h]
 \centering
-<<figure1, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5>>=
+<<figure1, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.height=5, dev='png', dpi=300>>=
 group_factor = factor(pData(qc_data)$knockdown, levels=unique(pData(qc_data)$knockdown)) #preserve the order?
 
 rd = melt(exprs(raw_data))
@@ -138,7 +135,7 @@ heatmap.2(as.matrix(d), col=redblue(48),
 
 \subsection{Hierarchical Clustering}
 
-Hierarchical clustering is an agglomerative, greedy, unsupervised clustering technique. It takes a "bottom up" approach to clustering: each observation starts in its own cluster, then pairs of clusters are merged as one moves up the hierarchy. The mothod used here is complete linkage, such that when a cluster is formed, its distance to other arrays is computed as the maximum distance between any array in the cluster and the other array.
+\noindent Hierarchical clustering is an agglomerative, greedy, unsupervised clustering technique. It takes a "bottom up" approach to clustering: each observation starts in its own cluster, then pairs of clusters are merged as one moves up the hierarchy. The mothod used here is complete linkage, such that when a cluster is formed, its distance to other arrays is computed as the maximum distance between any array in the cluster and the other array.
 
 \begin{figure}[h]
 \centering
@@ -150,7 +147,7 @@ h <- hclust(d, method='complete')
 
 # now use ggdendro
 dd <- dendro_data(h)
-labs <- label(dd)
+labs <- dd$labels
 # need to colour labels by sample group - from phene
 labs$group = pData(qc_data)[as.character(labs$label),]
 
@@ -189,7 +186,7 @@ if (length(outliers) > 0) {
 }
 @
 
-All of the quality control analysis presented points to TF3TF4B being an outlier array that should be removed, as it is likely to be harmful to the analysis if left in. This array is removed for all subsequent analyses. The rest of the data looks clean and consistent.
+\noindent All of the quality control analysis presented points to TF3TF4B being an outlier array that should be removed, as it is likely to be harmful to the analysis if left in. This array is removed for all subsequent analyses. The rest of the data looks clean and consistent.
 
 <<outlier_remove, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, results='hide'>>=
 raw_data = raw_data[,sampleNames(raw_data) != 'TF3TF4B']
@@ -207,6 +204,6 @@ present_count = detectionCall(qc_data)
 filtered_data = qc_data[present_count > 0,]
 nexclude = nrow(qc_data) - nrow(filtered_data)
 @
-Probes detected on each array are summarised in table 1. For a probe to be used in the subsequent analysis, it must pass the detection p-Value threshold (0.01) on at least one array. Applying this simple metric excludes \Sexpr{nexclude} probes from the analysis, and therefore we are carrying forward \Sexpr{nrow(filtered_data)} probes (\Sexpr{round(nrow(filtered_data)/nrow(qc_data)*100, 1)}\% of the total) on \Sexpr{ncol(filtered_data)} arrays for analysis.
+\noindent Probes detected on each array are summarised in table 1. For a probe to be used in the subsequent analysis, it must pass the detection p-Value threshold (0.01) on at least one array. Applying this simple metric excludes \Sexpr{nexclude} probes from the analysis, and therefore we are carrying forward \Sexpr{nrow(filtered_data)} probes (\Sexpr{round(nrow(filtered_data)/nrow(qc_data)*100, 1)}\% of the total) on \Sexpr{ncol(filtered_data)} arrays for analysis.
 
 \clearpage
